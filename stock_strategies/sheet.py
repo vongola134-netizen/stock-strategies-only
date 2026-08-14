@@ -17,11 +17,30 @@ def get_gsheet():
     return gc.open_by_key(os.environ["GOOGLE_SHEET_ID"])
 
 
+def _get_records_safe(ws) -> list[dict]:
+    """手動從 get_all_values() 組 records，取代 gspread 的 get_all_records()。
+
+    手動在 Google Sheets UI 建立的分頁預設有 26 欄，未使用的欄位表頭是空字串，
+    gspread 的 get_all_records() 會因為重複的空字串表頭而丟例外，這裡忽略尾端空白表頭來避開。
+    """
+    values = ws.get_all_values()
+    if not values:
+        return []
+    headers = [h.strip() for h in values[0]]
+    while headers and headers[-1] == "":
+        headers.pop()
+    records = []
+    for row in values[1:]:
+        row = row[: len(headers)] + [""] * (len(headers) - len(row))
+        records.append(dict(zip(headers, row)))
+    return records
+
+
 def read_watchlist() -> list[dict]:
     """從 Google Sheet Watchlist 分頁讀股票清單"""
     sh = get_gsheet()
     ws = sh.worksheet("Watchlist")
-    rows = ws.get_all_records()
+    rows = _get_records_safe(ws)
     enabled = [
         r for r in rows
         if str(r.get("enabled", "")).upper() in ("TRUE", "1", "YES")
@@ -96,7 +115,7 @@ def add_to_watchlist(stock_id: str, name: str = "") -> dict:
     name_col = headers.index("name") + 1 if "name" in headers else None
     en_col = headers.index("enabled") + 1
 
-    rows = ws.get_all_records()
+    rows = _get_records_safe(ws)
     for i, r in enumerate(rows, start=2):  # row 1 是 header
         if str(r.get("stock_id", "")).strip() == str(stock_id).strip():
             current = str(r.get("enabled", "")).upper()
@@ -132,7 +151,7 @@ def remove_from_watchlist(stock_id: str) -> dict:
         return {"status": "no_enabled_column"}
     en_col = headers.index("enabled") + 1
 
-    rows = ws.get_all_records()
+    rows = _get_records_safe(ws)
     for i, r in enumerate(rows, start=2):
         if str(r.get("stock_id", "")).strip() == str(stock_id).strip():
             ws.update_cell(i, en_col, "FALSE")
