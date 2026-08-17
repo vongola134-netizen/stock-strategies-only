@@ -1,9 +1,9 @@
 name: Premarket Night Session
 
 on:
-  schedule:
-    # 台灣時間 08:00 = UTC 00:00（夜盤 05:00 收完、開盤 09:00 前）
-    - cron: '0 0 * * 1-5'
+  # 排程觸發已停用：FinMind 對 GitHub Actions 雲端 IP 抓「台指期夜盤」資料
+  # 回傳 "Token is illegal"（個股資料不受影響），而這支腳本整個功能都靠
+  # 夜盤資料，改成本機 Windows 工作排程器執行。保留 workflow_dispatch 供手動測試。
   workflow_dispatch:  # 允許手動觸發測試
 
 jobs:

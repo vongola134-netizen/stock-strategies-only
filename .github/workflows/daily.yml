@@ -1,9 +1,11 @@
 name: V3 Daily Signal
 
 on:
-  schedule:
-    # Taiwan time 14:30 = UTC 06:30, after market close.
-    - cron: "30 6 * * 1-5"
+  # Scheduled trigger disabled: FinMind returns "Token is illegal" for
+  # TAIEX index / futures data specifically when called from GitHub
+  # Actions' cloud IPs (individual stock data is unaffected). Running
+  # locally via Windows Task Scheduler instead. workflow_dispatch kept
+  # for manual testing.
   workflow_dispatch:
 
 jobs:
