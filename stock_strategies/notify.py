@@ -147,6 +147,7 @@ def format_messages(
     watchlist: list[dict] = None,
     market: dict = None,
     night_note: str = None,
+    params: dict = None,
 ) -> list[str]:
     """產生多則 Telegram 訊息"""
     buys = [s for s in signals if s.get("action") == "BUY"]
@@ -190,12 +191,22 @@ def format_messages(
         msg1.extend(_sector_summary(signals, watchlist))
         msg1.append("")
 
+    p = params or CONFIG
+    wf = p.get("weight_fundamental", 0.3) * 100
+    wt = p.get("weight_technical", 0.3) * 100
+    wb = p.get("weight_backtest", 0.4) * 100
+    eps_th = p.get("eps_threshold", CONFIG["eps_threshold"])
+    roe_th = p.get("roe_threshold", CONFIG["roe_threshold"])
+    buy_th = p.get("min_total_score_for_buy", CONFIG["min_total_score_for_buy"])
+    stop_loss = p.get("stop_loss", CONFIG["stop_loss"])
+    target_return = p.get("target_return", CONFIG["target_return"])
+    hold_days = p.get("hold_days", CONFIG["hold_days"])
     msg1.append("📋 *策略規則*")
     msg1.append(
-        "基本面(EPS>5,ROE>15) + 技術面(均線/布林/KD/MACD) + 3年回測\n"
-        f"綜合 = 基本面30% + 技術30% + 回測40%\n"
-        f"BUY≥65(三關全過) | WATCH≥50\n"
-        f"停損{CONFIG['stop_loss']*100:.0f}% / 停利{CONFIG['target_return']*100:.0f}% / 持有{CONFIG['hold_days']}日"
+        f"基本面(EPS>{eps_th:g},ROE>{roe_th:g}) + 技術面(均線/布林/KD/MACD) + 3年回測\n"
+        f"綜合 = 基本面{wf:g}% + 技術{wt:g}% + 回測{wb:g}%\n"
+        f"BUY≥{buy_th:g}(三關全過) | WATCH≥50\n"
+        f"停損{stop_loss*100:.0f}% / 停利{target_return*100:.0f}% / 持有{hold_days}日"
     )
     messages.append("\n".join(msg1))
 

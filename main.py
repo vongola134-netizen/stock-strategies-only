@@ -36,6 +36,7 @@ from stock_strategies.night_session import (
     night_filter_note,
 )
 from stock_strategies.performance import update_performance, summary as perf_summary
+from stock_strategies.loader import get_strategy, merge_params
 
 
 REQUIRED_ENV = [
@@ -69,13 +70,14 @@ def main():
     night_note = night_filter_note(night)
     print(f"  → {night_note}")
 
-    # 3. 個股評分
+    # 3. 個股評分（讀 strategies/default.json，跟 Web UI 用同一份設定，不要各吃各的預設值）
+    strategy = get_strategy("default")
     results = []
     for i, row in enumerate(watchlist, 1):
         sid = str(row["stock_id"])
         name = row.get("name", "")
         print(f"[{i}/{len(watchlist)}] {sid} {name}")
-        r = evaluate(sid, name)
+        r = evaluate(sid, name, strategy=strategy)
         if r:
             results.append(r)
         time.sleep(0.6)
@@ -123,7 +125,10 @@ def main():
 
     # 7. 發送 Telegram
     print("發送 Telegram...")
-    for msg in format_messages(results, watchlist, market=market, night_note=night_note):
+    for msg in format_messages(
+        results, watchlist, market=market, night_note=night_note,
+        params=merge_params(strategy),
+    ):
         send_telegram(msg)
         time.sleep(0.5)
 
