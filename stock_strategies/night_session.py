@@ -145,6 +145,9 @@ def get_night_session() -> dict | None:
         df = _fetch_futures()
     except Exception as e:
         print(f"[night] 夜盤資料抓取失敗: {str(e)[:80]}")
+        body = getattr(getattr(e, "response", None), "text", "")
+        if body:
+            print(f"[night] FinMind 回應內容: {body[:300]}")
         return None
 
     if df.empty or "trading_session" not in df.columns:

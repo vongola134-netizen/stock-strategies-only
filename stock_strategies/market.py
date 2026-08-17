@@ -27,6 +27,9 @@ def get_market_state(ma_period: int = 20) -> dict:
             note = f"🔴 加權 {close:.0f} 跌破 {ma_period} 日線 ({pct:+.1f}%)，BUY 全數降為 WATCH"
         return {"bullish": bullish, "close": close, "ma20": ma20, "note": note}
     except Exception as e:
+        body = getattr(getattr(e, "response", None), "text", "")
+        if body:
+            print(f"[market] FinMind 回應內容: {body[:300]}")
         return {"bullish": True, "close": None, "ma20": None,
                 "note": f"⚠️ 大盤狀態取得失敗（{str(e)[:60]}），暫不套用濾鏡"}
 
